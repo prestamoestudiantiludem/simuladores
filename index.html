@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AF | Simulador Préstamo Estudiantil UDEM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --udem-yellow: #FFCC00;
+            --udem-yellow-glow: rgba(255, 204, 0, 0.4);
+            --bg-dark: #0F1115;
+            --card-bg: #1A1D24;
+            --text-light: #F3F4F6;
+            --text-muted: #9CA3AF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; 
+            background: radial-gradient(circle at top, #1a1e29 0%, var(--bg-dark) 70%);
+            position: relative; 
+        }
+
+        #intro-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.8s ease;
+        }
+
+        .pulse-dot {
+            width: 20px;
+            height: 20px;
+            background-color: var(--udem-yellow);
+            border-radius: 50%;
+            animation: pulse-anim 1.2s ease-in-out infinite;
+        }
+
+        .pulse-dot.expand {
+            animation: expand-anim 1s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes pulse-anim {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(255, 204, 0, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0); }
+        }
+
+        @keyframes expand-anim {
+            0% { transform: scale(1); opacity: 1; }
+            40% { opacity: 1; } 
+            100% { transform: scale(150); opacity: 0; } 
+        }
+
+        #main-content {
+            opacity: 0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1100px;
+            padding: 2rem;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+
+        #main-content.active { opacity: 1; }
+
+        header { text-align: center; margin-bottom: 3rem; }
+        #main-content.active header { animation: fadeInDown 0.8s ease-out forwards; }
+
+        h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
+        h1 span { color: var(--udem-yellow); }
+        p.subtitle { color: var(--text-muted); font-size: 1.1rem; font-weight: 300; }
+
+        .menu-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 800px; 
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-decoration: none;
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            opacity: 0; 
+            transform: translateY(30px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        border-color 0.3s ease, 
+                        box-shadow 0.4s ease;
+        }
+
+        #main-content.active .card:nth-child(1) { animation: fadeInUp 0.6s ease-out 0.2s forwards; }
+        #main-content.active .card:nth-child(2) { animation: fadeInUp 0.6s ease-out 0.4s forwards; }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--udem-yellow);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--udem-yellow-glow);
+        }
+
+        .card-icon { font-size: 3rem; color: var(--udem-yellow); margin-bottom: 1.5rem; transition: transform 0.3s ease; }
+        .card:hover .card-icon { transform: scale(1.15) rotate(5deg); }
+        
+        .card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; }
+        .card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--udem-yellow), transparent);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .card:hover::before { opacity: 1; }
+
+        footer {
+            position: absolute;
+            bottom: 20px; 
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 0 20px;
+            opacity: 0;
+            z-index: 5;
+        }
+
+        #main-content.active ~ footer { 
+            animation: fadeIn 1s ease-out 1s forwards; 
+        }
+
+        footer p {
+            font-size: 0.75rem; 
+            color: rgba(156, 163, 175, 0.5); 
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .dev-credit {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.5rem;
+            color: rgba(255, 255, 255, 0.1); 
+            letter-spacing: 0.5px;
+            z-index: 10;
+            opacity: 0;
+            transition: color 0.4s ease;
+            pointer-events: auto; 
+            text-transform: uppercase;
+        }
+        
+        #main-content.active ~ .dev-credit { 
+            animation: fadeIn 1s ease-out 1.2s forwards; 
+        }
+
+        .dev-credit:hover {
+            color: rgba(255, 255, 255, 0.7); 
+            cursor: default;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 900px) {
+            .menu-container { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .menu-container { grid-template-columns: 1fr; }
+            body { overflow-y: auto; align-items: flex-start; display: block; }
+            #main-content { padding-top: 4rem; padding-bottom: 6rem; min-height: 100vh; }
+            footer { bottom: 15px; } 
+            .dev-credit { bottom: 5px; right: 10px; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-loader">
+        <div class="pulse-dot" id="pulse-dot"></div>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <h1>Préstamo Estudiantil <span>UDEM</span></h1>
+            <p class="subtitle">Herramientas de simulación de préstamos estudiantiles</p>
+        </header>
+
+        <div class="menu-container">
+            <a href="https://www.udem.edu.mx/es/institucional/prestamos-estudiantiles-udem" target="_blank" rel="noopener noreferrer" class="card">
+                <i class="fa-solid fa-user-graduate card-icon"></i>
+                <h2>Simulador de Profesional</h2>
+                <p>Genera proyecciones financieras para la etapa de estudios, permitiendo visualizar las disposiciones por periodo y diseñar esquemas de pago personalizables.</p>
+            </a>
+
+            <a href="https://www.udem.edu.mx/es/admisiones-y-becas/otros-apoyos-financieros-posgrados" target="_blank" rel="noopener noreferrer" class="card">
+                <i class="fa-solid fa-user-tie card-icon"></i>
+                <h2>Simulador de Posgrado</h2>
+                <p>.:EN CONSTRUCCIÓN:.</p>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            Gerencia de Ayudas Financieras | Coordinación de Créditos Educativos 2026
+        </p>
+        <p style="font-size: 0.7rem; opacity: 0.8;">
+            Aviso: Esta aplicación es una herramienta de apoyo de uso interno y exclusivo del equipo DAES, diseñado estrictamente para fines informativos, de consulta y capacitación.
+        </p>
+    </footer>
+
+    <div class="dev-credit">.:JLP:.</div>
+
+    <script>
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('intro-loader');
+            const dot = document.getElementById('pulse-dot');
+            const content = document.getElementById('main-content');
+
+            setTimeout(() => {
+                dot.classList.add('expand');
+
+                setTimeout(() => {
+                    loader.style.opacity = '0'; 
+                    content.classList.add('active'); 
+                    document.body.style.overflow = 'auto'; 
+
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 800); 
+
+                }, 600); 
+
+            }, 1600);
+        });
+    </script>
+</body>
+</html>
